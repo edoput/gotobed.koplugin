@@ -1,22 +1,35 @@
+-- ui
 local DateTimeWidget = require("ui/widget/datetimewidget")
 local InfoMessage = require("ui/widget/infomessage")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
+-- persistence
+local LuaSettings = require("luasettings")
+local DataStorage = require("datastorage")
+
+-- i18n
 local _ = require("gettext")
 local T = require("ffi/util").template
 
+-- debug
+local logger = require("logger")
+
+
 local GoToBed = WidgetContainer:new{
         name = "gotobed",
-        time = false,
+        settings = nil,
 }
 
 function GoToBed:init()
+        if not self.settings then
+                self.settings = LuaSettings:open(DataStorage:getSettingsDir() .. "/gotobed.lua")
+        end
         self.ui.menu:registerToMainMenu(self)
 end
 
 function GoToBed:enabled()
-        return self.time
+        return self.settings:readSetting("bedtime", 0) ~= 0
 end
 
 function GoToBed:addToMainMenu(menu_items)
@@ -24,10 +37,11 @@ function GoToBed:addToMainMenu(menu_items)
                 -- main menu item
                 text_func = function ()
                         if self:enabled() then
+                                local bedtime = self.settings:readSetting("bedtime", { hour = 0, min = 0})
                                 return T(
                                         _("Bedtime is at %1:%1"),
-                                        string.format("%02d", self.time.hour),
-                                        string.format("%02d", self.time.min)
+                                        string.format("%02d", bedtime.hour),
+                                        string.format("%02d", bedtime.min)
                                 )
                         else
                                 return _("Set up bedtime")
@@ -60,7 +74,9 @@ function GoToBed:addToMainMenu(menu_items)
                                                         }
                                                         UIManager:show(confirmation)
                                                         -- actually save new value
-                                                        self.time = time
+                                                        self.settings:saveSetting("bedtime", {hour = time.hour, min = time.min})
+                                                        -- and persist to disk
+                                                        self.settings:flush()
                                                 end
                                         }
                                         UIManager:show(time_picker)
@@ -72,7 +88,8 @@ function GoToBed:addToMainMenu(menu_items)
                                 keep_menu_open = true,
                                 enabled_func = function() return self:enabled() end,
                                 callback = function(touchmenu_instance)
-                                        self.time = false
+                                        self.settings:delSetting("bedtime")
+                                        self.settings:flush()
                                         touchmenu_instance:updateItems()
                                 end
                         },

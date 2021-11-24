@@ -12,7 +12,7 @@ local GoToBed = WidgetContainer:new{
 }
 
 function GoToBed:init()
-        selt.ui.menu:registerToMainMenu(self)
+        self.ui.menu:registerToMainMenu(self)
 end
 
 function GoToBed:enabled()
@@ -26,8 +26,8 @@ function GoToBed:addToMainMenu(menu_items)
                         if self:enabled() then
                                 return T(
                                         _("Bedtime is at %1:%1"),
-                                        string.format("%02d", time.hour),
-                                        string.format("%02d", time.min),
+                                        string.format("%02d", self.time.hour),
+                                        string.format("%02d", self.time.min)
                                 )
                         else
                                 return _("Set up bedtime")
@@ -54,8 +54,8 @@ function GoToBed:addToMainMenu(menu_items)
                                                         local confirmation = InfoMessage:new{
                                                                 text = T(_("Bedtime is at %1:%2"),
                                                                         string.format("%02d", time.hour),
-                                                                        string.format("%02d", time.min),
-                                                                        )
+                                                                        string.format("%02d", time.min)
+                                                                        ),
                                                                 timeout = 5,
                                                         }
                                                         UIManager:show(confirmation)
